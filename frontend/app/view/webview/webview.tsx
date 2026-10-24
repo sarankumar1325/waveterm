@@ -82,6 +82,8 @@ export class WebViewModel implements ViewModel {
         this.viewType = "web";
         this.blockId = blockId;
         this.env = waveEnv;
+        // passed as a callback to the bookmark typeahead, so keep `this` bound
+        this.fetchBookmarkSuggestions = this.fetchBookmarkSuggestions.bind(this);
         this.noPadding = atom(true);
         this.blockAtom = this.env.wos.getWaveObjectAtom<Block>(`block:${blockId}`);
         this.url = atom();
@@ -755,7 +757,7 @@ const BookmarkTypeahead = memo(
         const env = useWaveEnv<WebViewEnv>();
         const openBookmarksJson = () => {
             fireAndForget(async () => {
-                const path = `${env.electron.getConfigDir()}/presets/bookmarks.json`;
+                const path = `${env.electron.getConfigDir()}/bookmarks.json`;
                 const blockDef: BlockDef = {
                     meta: {
                         view: "preview",

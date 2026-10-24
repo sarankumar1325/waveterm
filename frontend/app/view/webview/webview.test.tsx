@@ -56,4 +56,33 @@ describe("webview preview fallback", () => {
         expect(globalStore.get(env.getSettingsKeyAtom("web:defaulturl"))).toBe("https://global.example");
         expect(globalStore.get(env.wos.getWaveObjectAtom<Block>(`block:${blockId}`))?.meta?.pinnedurl).toBeUndefined();
     });
+
+    it("fetches bookmark suggestions when called as a detached callback", async () => {
+        const blockId = "webview-bookmark-block";
+        const calls: FetchSuggestionsData[] = [];
+        const env = makeMockWaveEnv({
+            rpc: {
+                FetchSuggestionsCommand: async (_client, data: FetchSuggestionsData) => {
+                    calls.push(data);
+                    return { reqnum: data.reqnum, suggestions: [] };
+                },
+            },
+        });
+        const model = new WebViewModel({
+            blockId,
+            nodeModel: {
+                isFocused: atom(true),
+                focusNode: () => {},
+            } as any,
+            tabModel: {} as any,
+            waveEnv: env,
+        });
+
+        // BookmarkTypeahead passes the method itself as the fetchSuggestions callback
+        const fetchSuggestions = model.fetchBookmarkSuggestions;
+        const result = await fetchSuggestions("git", { widgetid: "w1", reqnum: 1 });
+
+        expect(result).toEqual({ reqnum: 1, suggestions: [] });
+        expect(calls).toEqual([{ suggestiontype: "bookmark", query: "git", widgetid: "w1", reqnum: 1 }]);
+    });
 });
